@@ -13,11 +13,11 @@
     },
     {
       "src": "/assets/(.*)",
-      "dest": "/dist/assets/$1"
+      "dest": "server/index.js"
     },
     {
       "src": "/beat\\.svg",
-      "dest": "/dist/beat.svg"
+      "dest": "server/index.js"
     },
     {
       "src": "/(.*)",
