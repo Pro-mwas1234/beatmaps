@@ -16,87 +16,207 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// In-memory store for auth codes (in production, use a database)
-const authCodes = new Map();
-
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Spotify OAuth configuration
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:3001/api/spotify/callback';
+// Last.fm API configuration (NO OAuth needed!)
+const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
+const LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/';
 
-// Generate random string for state parameter
-function generateRandomString(length) {
-  let text = '';
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
+/**
+ * Last.fm Endpoints - Much simpler than Spotify!
+ * No OAuth flow required for public data. Just pass the API key.
+ */
+
+// Get user info
+app.get('/api/lastfm/user', async (req, res) => {
+  const { username } = req.query;
+  
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
   }
-  return text;
-}
 
-// Spotify login endpoint - generates auth URL with response_type=code
-app.get('/api/spotify/login', (req, res) => {
-  const state = generateRandomString(16);
-  const scope = 'user-modify-playback-state user-read-playback-state streaming user-read-currently-playing';
-  
-  const authUrl = new URL('https://accounts.spotify.com/authorize');
-  authUrl.searchParams.append('client_id', SPOTIFY_CLIENT_ID);
-  authUrl.searchParams.append('response_type', 'code');
-  authUrl.searchParams.append('redirect_uri', SPOTIFY_REDIRECT_URI);
-  authUrl.searchParams.append('scope', scope);
-  authUrl.searchParams.append('state', state);
-  authUrl.searchParams.append('show_dialog', 'false');
-  
-  // Store state for validation later (in production, use sessions or Redis)
-  authCodes.set(state, { timestamp: Date.now() });
-  
-  res.json({ authUrl: authUrl.toString() });
+  try {
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'user.getInfo',
+        user: username,
+        api_key: LASTFM_API_KEY,
+        format: 'json'
+      }
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Last.fm user info error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch user info' });
+  }
 });
 
-// Spotify callback endpoint - exchanges code for access token
-app.get('/api/spotify/callback', async (req, res) => {
-  const { code, state, error } = req.query;
+// Get user's top artists
+app.get('/api/lastfm/top-artists', async (req, res) => {
+  const { username, limit = 50, page = 1, period = 'overall' } = req.query;
   
-  if (error) {
-    return res.redirect(`/?error=${encodeURIComponent(error)}`);
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
   }
-  
-  if (!state || !authCodes.has(state)) {
-    return res.status(400).json({ error: 'Invalid state parameter' });
-  }
-  
-  // Clean up used state
-  authCodes.delete(state);
-  
+
   try {
-    // Exchange authorization code for access token
-    const tokenResponse = await axios.post(
-      'https://accounts.spotify.com/api/token',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: SPOTIFY_REDIRECT_URI,
-        client_id: SPOTIFY_CLIENT_ID,
-        client_secret: SPOTIFY_CLIENT_SECRET
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'user.getTopArtists',
+        user: username,
+        api_key: LASTFM_API_KEY,
+        limit: limit,
+        page: page,
+        period: period,
+        format: 'json'
       }
-    );
-    
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
-    
-    // Redirect back to app with token in hash (for frontend to pick up)
-    res.redirect(`/#access_token=${access_token}&refresh_token=${refresh_token}&expires_in=${expires_in}`);
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
   } catch (error) {
-    console.error('Error exchanging code for token:', error.response?.data || error.message);
-    res.redirect(`/?error=${encodeURIComponent('Failed to get access token')}`);
+    console.error('Last.fm top artists error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch top artists' });
   }
+});
+
+// Get user's top tracks
+app.get('/api/lastfm/top-tracks', async (req, res) => {
+  const { username, limit = 50, page = 1, period = 'overall' } = req.query;
+  
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  try {
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'user.getTopTracks',
+        user: username,
+        api_key: LASTFM_API_KEY,
+        limit: limit,
+        page: page,
+        period: period,
+        format: 'json'
+      }
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Last.fm top tracks error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch top tracks' });
+  }
+});
+
+// Get artist info (includes tags, similar artists, etc.)
+app.get('/api/lastfm/artist', async (req, res) => {
+  const { artist } = req.query;
+  
+  if (!artist) {
+    return res.status(400).json({ error: 'Artist name is required' });
+  }
+
+  try {
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'artist.getInfo',
+        artist: artist,
+        api_key: LASTFM_API_KEY,
+        format: 'json'
+      }
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Last.fm artist info error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch artist info' });
+  }
+});
+
+// Get artist's top tags (for genre mapping)
+app.get('/api/lastfm/artist-top-tags', async (req, res) => {
+  const { artist } = req.query;
+  
+  if (!artist) {
+    return res.status(400).json({ error: 'Artist name is required' });
+  }
+
+  try {
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'artist.getTopTags',
+        artist: artist,
+        api_key: LASTFM_API_KEY,
+        format: 'json'
+      }
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Last.fm artist tags error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch artist tags' });
+  }
+});
+
+// Search tracks
+app.get('/api/lastfm/search-tracks', async (req, res) => {
+  const { track, artist, limit = 30 } = req.query;
+  
+  if (!track) {
+    return res.status(400).json({ error: 'Track name is required' });
+  }
+
+  try {
+    const response = await axios.get(LASTFM_BASE_URL, {
+      params: {
+        method: 'track.search',
+        track: track,
+        artist: artist || '',
+        api_key: LASTFM_API_KEY,
+        limit: limit,
+        format: 'json'
+      }
+    });
+
+    if (response.data.error) {
+      return res.status(400).json({ error: response.data.message });
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Last.fm track search error:', error.message);
+    res.status(500).json({ error: 'Failed to search tracks' });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'BeatMaps server is running',
+    provider: 'Last.fm (No OAuth required!)'
+  });
 });
 
 // Serve index.html for all non-API routes (SPA support)
@@ -104,63 +224,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// Proxy endpoint for Spotify API (to avoid CORS issues in production)
-app.get('/api/spotify/audio-features/:trackId', async (req, res) => {
-  try {
-    const { trackId } = req.params;
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const response = await axios.get(
-      `https://api.spotify.com/v1/audio-features/${trackId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching audio features:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to fetch audio features' });
-  }
-});
-
-// Proxy endpoint for current playback state
-app.get('/api/spotify/currently-playing', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const response = await axios.get(
-      'https://api.spotify.com/v1/me/player/currently-playing',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching currently playing:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json(error.response?.data || { error: 'Failed to fetch playback state' });
-  }
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'BeatMaps server is running' });
-});
-
 app.listen(PORT, () => {
   console.log(`🎵 BeatMaps server running on port ${PORT}`);
+  console.log(`📍 Using Last.fm API - No OAuth complexity!`);
   console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
 });
