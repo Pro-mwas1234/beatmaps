@@ -41,7 +41,17 @@ function App() {
   // Handle Spotify Authentication
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    
+    if (code) {
+      // Note: In a production app, you should exchange this code for a token on your backend server
+      // For demo purposes, we're storing the code and using it directly (not recommended for production)
+      window.history.replaceState({}, document.title, window.location.pathname);
+      localStorage.setItem('spotify_token', code);
+      setSpotifyToken(code);
+      setIsAuthenticated(true);
+    } else if (hash) {
       const token = hash.substring(1).split('&').find(elem => elem.startsWith('access_token'))?.split('=')[1];
       if (token) {
         window.location.hash = '';
@@ -314,7 +324,7 @@ function App() {
   // Login handler
   const handleLogin = () => {
     const scope = 'user-modify-playback-state user-read-playback-state streaming user-read-currently-playing';
-    const url = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=${encodeURIComponent(scope)}&show_dialog=false`;
+    const url = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=${encodeURIComponent(scope)}&show_dialog=false`;
     window.location.href = url;
   };
 
