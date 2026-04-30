@@ -1,48 +1,52 @@
 ```
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.swp
-*.swo
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.julia/
+zig*/
+julia-*/
 
 # Build artifacts
 dist/
 build/
 target/
-
-# Dependencies
-node_modules/
-__pycache__/
 *.pyc
-*.pyo
-.Python
-venv/
-.venv/
-.envrc
-.env.local
+*.class
+*.o
+*.exe
+*.dll
+*.so
+*.a
+*.obj
+*.out
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
 
-# Coverage reports
+# Logs
+*.log
+
+# Coverage
 coverage/
 htmlcov/
 .coverage
 
-# IDE specific
-.vscode/
-.idea/
-*.iml
-*.ipr
-*.iws
+# System
+.DS_Store
+Thumbs.db
 
 # Compressed files
 *.zip
