@@ -19,194 +19,69 @@ app.use(express.json());
 // Serve static files from the dist directory
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Last.fm API configuration (NO OAuth needed!)
-const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
-const LASTFM_BASE_URL = 'https://ws.audioscrobbler.com/2.0/';
+// YouTube Data API configuration
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const YOUTUBE_BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
 /**
- * Last.fm Endpoints - Much simpler than Spotify!
- * No OAuth flow required for public data. Just pass the API key.
+ * YouTube Endpoints - Simple music search!
+ * No OAuth required for search functionality.
  */
 
-// Get user info
-app.get('/api/lastfm/user', async (req, res) => {
-  const { username } = req.query;
+// Search for music videos
+app.get('/api/youtube/search', async (req, res) => {
+  const { q, maxResults = 10 } = req.query;
   
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
+  if (!q) {
+    return res.status(400).json({ error: 'Search query is required' });
   }
 
   try {
-    const response = await axios.get(LASTFM_BASE_URL, {
+    // If no API key, return mock results for demo
+    if (!YOUTUBE_API_KEY) {
+      console.log('No YouTube API key configured, returning mock results');
+      return res.json({
+        items: [
+          {
+            id: { videoId: 'dQw4w9WgXcQ' },
+            snippet: {
+              title: 'Rick Astley - Never Gonna Give You Up',
+              thumbnails: { medium: { url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg' } }
+            }
+          },
+          {
+            id: { videoId: '9bZkp7q19f0' },
+            snippet: {
+              title: 'PSY - GANGNAM STYLE',
+              thumbnails: { medium: { url: 'https://img.youtube.com/vi/9bZkp7q19f0/mqdefault.jpg' } }
+            }
+          },
+          {
+            id: { videoId: 'kJQP7kiw5Fk' },
+            snippet: {
+              title: 'Luis Fonsi - Despacito ft. Daddy Yankee',
+              thumbnails: { medium: { url: 'https://img.youtube.com/vi/kJQP7kiw5Fk/mqdefault.jpg' } }
+            }
+          }
+        ]
+      });
+    }
+
+    const response = await axios.get(`${YOUTUBE_BASE_URL}/search`, {
       params: {
-        method: 'user.getInfo',
-        user: username,
-        api_key: LASTFM_API_KEY,
-        format: 'json'
+        part: 'snippet',
+        q: q,
+        type: 'video',
+        videoCategoryId: '10', // Music category
+        maxResults: maxResults,
+        key: YOUTUBE_API_KEY
       }
     });
 
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
     res.json(response.data);
   } catch (error) {
-    console.error('Last.fm user info error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch user info' });
-  }
-});
-
-// Get user's top artists
-app.get('/api/lastfm/top-artists', async (req, res) => {
-  const { username, limit = 50, page = 1, period = 'overall' } = req.query;
-  
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
-
-  try {
-    const response = await axios.get(LASTFM_BASE_URL, {
-      params: {
-        method: 'user.getTopArtists',
-        user: username,
-        api_key: LASTFM_API_KEY,
-        limit: limit,
-        page: page,
-        period: period,
-        format: 'json'
-      }
-    });
-
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Last.fm top artists error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch top artists' });
-  }
-});
-
-// Get user's top tracks
-app.get('/api/lastfm/top-tracks', async (req, res) => {
-  const { username, limit = 50, page = 1, period = 'overall' } = req.query;
-  
-  if (!username) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
-
-  try {
-    const response = await axios.get(LASTFM_BASE_URL, {
-      params: {
-        method: 'user.getTopTracks',
-        user: username,
-        api_key: LASTFM_API_KEY,
-        limit: limit,
-        page: page,
-        period: period,
-        format: 'json'
-      }
-    });
-
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Last.fm top tracks error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch top tracks' });
-  }
-});
-
-// Get artist info (includes tags, similar artists, etc.)
-app.get('/api/lastfm/artist', async (req, res) => {
-  const { artist } = req.query;
-  
-  if (!artist) {
-    return res.status(400).json({ error: 'Artist name is required' });
-  }
-
-  try {
-    const response = await axios.get(LASTFM_BASE_URL, {
-      params: {
-        method: 'artist.getInfo',
-        artist: artist,
-        api_key: LASTFM_API_KEY,
-        format: 'json'
-      }
-    });
-
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Last.fm artist info error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch artist info' });
-  }
-});
-
-// Get artist's top tags (for genre mapping)
-app.get('/api/lastfm/artist-top-tags', async (req, res) => {
-  const { artist } = req.query;
-  
-  if (!artist) {
-    return res.status(400).json({ error: 'Artist name is required' });
-  }
-
-  try {
-    const response = await axios.get(LASTFM_BASE_URL, {
-      params: {
-        method: 'artist.getTopTags',
-        artist: artist,
-        api_key: LASTFM_API_KEY,
-        format: 'json'
-      }
-    });
-
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Last.fm artist tags error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch artist tags' });
-  }
-});
-
-// Search tracks
-app.get('/api/lastfm/search-tracks', async (req, res) => {
-  const { track, artist, limit = 30 } = req.query;
-  
-  if (!track) {
-    return res.status(400).json({ error: 'Track name is required' });
-  }
-
-  try {
-    const response = await axios.get(LASTFM_BASE_URL, {
-      params: {
-        method: 'track.search',
-        track: track,
-        artist: artist || '',
-        api_key: LASTFM_API_KEY,
-        limit: limit,
-        format: 'json'
-      }
-    });
-
-    if (response.data.error) {
-      return res.status(400).json({ error: response.data.message });
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Last.fm track search error:', error.message);
-    res.status(500).json({ error: 'Failed to search tracks' });
+    console.error('YouTube search error:', error.message);
+    res.status(500).json({ error: 'Failed to search YouTube' });
   }
 });
 
@@ -215,7 +90,7 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'BeatMaps server is running',
-    provider: 'Last.fm (No OAuth required!)'
+    provider: 'YouTube (No OAuth required for search!)'
   });
 });
 
