@@ -22,7 +22,7 @@ class NavigationService {
   }
 
   async calculateRoute(start: [number, number], end: [number, number]) {
-    if (!this.map) return;
+    if (!this.map) throw new Error('Map not initialized');
 
     // Dynamic import for leaflet-routing-machine
     const { route } = await import('leaflet-routing-machine');
@@ -32,6 +32,11 @@ class NavigationService {
       if (this.routingControl) {
         this.map!.removeControl(this.routingControl);
       }
+
+      // Timeout handler
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Route calculation timed out. Please try again.'));
+      }, 15000);
 
       this.routingControl = route({
         waypoints: [
@@ -46,10 +51,17 @@ class NavigationService {
           styles: [{ color: '#00ff88', opacity: 0.8, weight: 6 }]
         },
         router: L.Routing.osrmv1({
-          serviceUrl: 'https://router.project-osrm.org/route/v1'
+          serviceUrl: 'https://router.project-osrm.org/route/v1',
+          timeout: 10000
         })
       }).on('routesfound', (e: any) => {
+        clearTimeout(timeoutId);
         const routes = e.routes;
+        
+        if (!routes || routes.length === 0) {
+          reject(new Error('No route found'));
+          return;
+        }
         
         // Parse instructions
         this.upcomingTurns = routes[0].instructions.map((inst: any) => ({
@@ -63,10 +75,16 @@ class NavigationService {
         this.nextTurnIndex = 0;
         this.currentRoute = routes[0];
         
+        // Fit map bounds to show entire route
+        const latlngs = routes[0].coordinates.map((coord: any) => [coord.lat, coord.lng]);
+        this.map!.fitBounds(L.latLngBounds(latlngs), { padding: [50, 50] });
+        
         resolve(routes[0]);
         this.notifyListeners();
       }).on('routingerror', (e: any) => {
-        reject(e.error);
+        clearTimeout(timeoutId);
+        console.error('Routing error:', e);
+        reject(new Error('Unable to find route. Please try different locations or check your connection.'));
       }).addTo(this.map);
     });
   }

@@ -1,6 +1,278 @@
 /* Additional App-specific styles */
 
-/* Hide Leaflet Routing Machine default container */
+/* Search Panel - Google Maps Style */
+.search-panel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1500;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+}
+
+.search-panel {
+  background: var(--surface);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 450px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  padding: 20px;
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--surface-light);
+  color: var(--text);
+}
+
+.search-input-container {
+  display: flex;
+  align-items: center;
+  background: var(--surface-light);
+  border-radius: 12px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.search-input-container:focus-within {
+  border-color: var(--primary);
+  background: #2a2a2a;
+}
+
+.input-icon {
+  font-size: 1.2rem;
+  margin-right: 12px;
+  min-width: 24px;
+}
+
+.origin-icon {
+  filter: drop-shadow(0 0 2px #4285f4);
+}
+
+.dest-icon {
+  filter: drop-shadow(0 0 2px #ea4335);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  padding: 0;
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.clear-btn {
+  background: var(--surface-light);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #3a3a3a;
+  color: var(--text);
+}
+
+.search-results {
+  background: var(--surface-light);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #333;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #333;
+}
+
+.result-icon {
+  font-size: 1.1rem;
+  margin-right: 12px;
+}
+
+.result-name {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-type {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.quick-action-btn {
+  flex: 1;
+  background: var(--surface-light);
+  border: 1px solid #333;
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quick-action-btn:hover {
+  background: #333;
+  border-color: var(--primary);
+}
+
+.transport-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.transport-mode-btn {
+  flex: 1;
+  min-width: 70px;
+  background: var(--surface-light);
+  border: 2px solid #333;
+  color: var(--text-secondary);
+  padding: 12px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.transport-mode-btn:hover {
+  background: #333;
+}
+
+.transport-mode-btn.active {
+  border-color: var(--primary);
+  background: rgba(29, 185, 84, 0.1);
+  color: var(--primary);
+}
+
+.mode-icon {
+  font-size: 1.5rem;
+}
+
+.mode-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.start-nav-btn {
+  width: 100%;
+  background: var(--primary);
+  border: none;
+  color: #000;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.start-nav-btn:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.start-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Navigation mode adjustments */
+.overlay-panel.navigation-mode {
+  bottom: auto;
+  top: 20px;
+  right: 20px;
+  left: auto;
+  width: 350px;
+  max-width: calc(100% - 40px);
+  z-index: 1000 !important;
+}
+
+.overlay-panel.navigation-mode .panel-content {
+  border-radius: 16px;
+}
+
+/* Hide routing container */
 .hide-routing-container {
   display: none !important;
 }
