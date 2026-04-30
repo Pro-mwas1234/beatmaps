@@ -1,9 +1,6 @@
 /* Additional App-specific styles */
 
-/* Hide Leaflet Routing Machine default container */
-.hide-routing-container {
-  display: none !important;
-}
+/* Hide Leaflet Routing Machine default container - moved to index.css */
 
 /* Custom scrollbar for any overflow content */
 ::-webkit-scrollbar {
