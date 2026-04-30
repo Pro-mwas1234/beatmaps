@@ -91,19 +91,17 @@ app.get('/api/spotify/callback', async (req, res) => {
   }
 });
 
-// Serve index.html for all non-API routes (SPA support) - DISABLED FOR VERCEL
-// Vercel handles static files automatically
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../dist/index.html'));
-// });
-
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'BeatMaps server is running' });
 });
 
-// Export for Vercel serverless function
-export default app;
+// Vercel serverless function handler
+export default async function handler(req, res) {
+  // Pass the request to Express app
+  app(req, res);
+}
+
 export const config = {
   api: {
     bodyParser: true,
