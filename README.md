@@ -182,25 +182,68 @@ Edit CSS variables in `src/index.css`:
 }
 ```
 
-## 🚀 Deployment
+## 🚀 One-Click Deployment
 
-### Frontend (Vercel/Netlify)
+Deploy BeatMaps to your favorite platform with a single click:
 
-1. Build the app:
-   ```bash
-   npm run build
-   ```
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/beatmaps&env=SPOTIFY_CLIENT_ID&envDescription=Spotify%20Client%20ID%20from%20developer%20dashboard&envLink=https://developer.spotify.com/dashboard)
 
-2. Deploy the `dist` folder to your hosting provider
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new?repository=https://github.com/YOUR_USERNAME/beatmaps&envs=SPOTIFY_CLIENT_ID&SPOTIFY_CLIENT_IDDesc=Spotify%20Client%20ID%20from%20developer%20dashboard)
 
-3. Set environment variables in your hosting dashboard
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/beatmaps)
 
-### Backend (Railway/Render)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/YOUR_USERNAME/beatmaps&branch=main&name=beatmaps)
 
-1. Push code to GitHub
-2. Connect repository to Railway/Render
-3. Add environment variables
-4. Deploy!
+### Platform-Specific Instructions
+
+#### Vercel
+1. Click the "Deploy with Vercel" button above
+2. Connect your GitHub account
+3. Set environment variable: `SPOTIFY_CLIENT_ID`
+4. Deploy! Your app will be live at `https://your-app.vercel.app`
+
+**Important**: After deployment, update your Spotify Dashboard Redirect URI to include your new Vercel URL (e.g., `https://your-app.vercel.app`)
+
+#### Railway
+1. Click the "Deploy on Railway" button above
+2. Connect your GitHub repository
+3. Add environment variable: `SPOTIFY_CLIENT_ID`
+4. Deploy! Railway will provide you with a public URL
+
+**Important**: Update your Spotify Dashboard Redirect URI with your Railway URL
+
+#### Render
+1. Click the "Deploy to Render" button above
+2. Sign in or create a Render account
+3. Configure environment variables: `SPOTIFY_CLIENT_ID`
+4. Deploy! Get your public URL from the Render dashboard
+
+**Important**: Add your Render URL to Spotify Dashboard Redirect URIs
+
+#### Koyeb
+1. Click the "Deploy to Koyeb" button above
+2. Authorize Koyeb to access your GitHub
+3. Select your repository and branch
+4. Add environment variable: `SPOTIFY_CLIENT_ID`
+5. Deploy! Koyeb will automatically detect and configure your app
+
+**Important**: Update Spotify Dashboard with your Koyeb app URL as Redirect URI
+
+### Setting Up Spotify Redirect URIs
+
+After deploying to any platform, you **must** update your Spotify Developer Dashboard:
+
+1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Select your BeatMaps app
+3. Click "Edit Settings"
+4. Add your deployment URL to **Redirect URIs**:
+   - Vercel: `https://your-app.vercel.app`
+   - Railway: `https://your-app.railway.app`
+   - Render: `https://your-app.onrender.com`
+   - Koyeb: `https://your-app.koyeb.app`
+5. Click "Save"
+
+## 🏗️ Manual Deployment
 
 ## ⚠️ Important Notes
 
