@@ -106,27 +106,37 @@ class NavigationService {
     if (this.userLocationMarker) {
       this.userLocationMarker.setLatLng(L.latLng(location[0], location[1]));
     } else {
-      // Create a custom marker for user location
+      // Create a custom pulsing marker for user location
       const userIcon = L.divIcon({
         className: 'user-location-marker',
-        html: `<div style="
-          width: 16px;
-          height: 16px;
-          background-color: #00ff88;
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
-          animation: pulse 2s infinite;
-        "></div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
+        html: `
+          <div style="
+            position: relative;
+            width: 20px;
+            height: 20px;
+          ">
+            <div style="
+              position: absolute;
+              width: 20px;
+              height: 20px;
+              background-color: #00ff88;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 0 15px rgba(0, 255, 136, 0.9);
+              animation: pulse-green 2s infinite;
+            "></div>
+          </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
       });
       
-      this.userLocationMarker = L.marker(location, { icon: userIcon }).addTo(this.map);
-      this.userLocationMarker.bindPopup('Your Location').openPopup();
+      this.userLocationMarker = L.marker(location, { 
+        icon: userIcon,
+        zIndexOffset: 1000 // Ensure user marker is on top
+      }).addTo(this.map);
     }
 
-    // Add accuracy circle if available (optional enhancement)
     return this.userLocationMarker;
   }
 
