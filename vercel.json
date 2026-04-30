@@ -16,12 +16,12 @@
       "dest": "server/index.js"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "dist/assets/$1"
+      "src": "/beat\\.svg",
+      "dest": "dist/beat.svg"
     },
     {
-      "src": "/(.*)\\.(js|css|svg|png|jpg|ico)",
-      "dest": "dist/$1.$2"
+      "src": "/assets/(.*)",
+      "dest": "dist/assets/$1"
     },
     {
       "src": "/(.*)",
