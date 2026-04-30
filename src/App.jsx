@@ -389,7 +389,9 @@ function App() {
       }
     } catch (error) {
       console.error('Route calculation failed:', error);
-      speak('Unable to calculate route. Please check your connection.');
+      const errorMessage = error.message || 'Unknown error';
+      speak(`Unable to find route: ${errorMessage}. Try different locations or check your connection.`);
+      alert(`Route Error: ${errorMessage}\n\nTips:\n- Make sure both origin and destination are valid locations\n- Try searching for major cities or landmarks\n- Check your internet connection\n- The routing service may be temporarily unavailable`);
     }
   };
 
