@@ -2,22 +2,48 @@
 # Build artifacts
 dist/
 build/
+*.css
 *.js
+*.html
 
 # Dependencies
 node_modules/
 
-# Editors
-.vscode/
-.idea/
-
-# Logs and temp files
-*.log
-*.tmp
-*.swp
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # Environment
 .env
 .env.local
-.env.*
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+
+# Distribution
+*.tar.gz
+*.zip
+*.whl
 ```

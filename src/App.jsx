@@ -26,7 +26,9 @@ function App() {
   const [mapInstance, setMapInstance] = useState(null);
   const [nextInstruction, setNextInstruction] = useState(null);
   const [visualizerBars, setVisualizerBars] = useState(Array(12).fill(10));
-  const [userLocation, setUserLocation] = useState([37.7749, -122.4194]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationPermission, setLocationPermission] = useState('prompt');
+  const [locationError, setLocationError] = useState(null);
   const [destination, setDestination] = useState(null);
   const [routeActive, setRouteActive] = useState(false);
   
@@ -34,6 +36,7 @@ function App() {
   const mapContainerRef = useRef(null);
   const L = useRef(null);
   const locationWatchId = useRef(null);
+  const initialLocationSet = useRef(false);
 
   // Initialize voice navigation
   const { speak, stopSpeaking, speaking, currentAnnouncement } = useVoiceNavigation(VOICE_SETTINGS);
@@ -73,7 +76,9 @@ function App() {
         document.head.appendChild(link);
       }
 
-      const map = L.current.map(mapContainerRef.current).setView(userLocation, 13);
+      // Use user location if available, otherwise default to San Francisco
+      const initialView = userLocation || [37.7749, -122.4194];
+      const map = L.current.map(mapContainerRef.current).setView(initialView, 13);
       
       L.current.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -82,8 +87,11 @@ function App() {
       }).addTo(map);
 
       // Add user location marker
-      const userMarker = L.current.marker(userLocation).addTo(map);
-      userMarker.bindPopup('You are here').openPopup();
+      let userMarker = null;
+      if (userLocation) {
+        userMarker = L.current.marker(userLocation).addTo(map);
+        userMarker.bindPopup('You are here').openPopup();
+      }
 
       setMapInstance(map);
       NavigationService.init(map);
@@ -105,11 +113,70 @@ function App() {
     };
 
     initMap();
-  }, [isAuthenticated, syncEnabled, isPlaying, speak]);
+  }, [isAuthenticated, syncEnabled, isPlaying, speak, userLocation]);
 
-  // Track user location
+  // Request location permission and get initial position on app load
   useEffect(() => {
-    if (!mapInstance || !routeActive) return;
+    if (!isAuthenticated) return;
+
+    const requestLocation = async () => {
+      if (!('geolocation' in navigator)) {
+        setLocationError('Geolocation is not supported by your browser');
+        setLocationPermission('denied');
+        return;
+      }
+
+      try {
+        // Request permission first
+        if (navigator.permissions) {
+          const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+          setLocationPermission(permissionStatus.state);
+          
+          permissionStatus.onchange = () => {
+            setLocationPermission(permissionStatus.state);
+          };
+        }
+
+        // Get initial position
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const initialLocation = [position.coords.latitude, position.coords.longitude];
+            setUserLocation(initialLocation);
+            initialLocationSet.current = true;
+            setLocationError(null);
+          },
+          (error) => {
+            let errorMessage = 'Unable to get your location';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied. Please enable location access.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out.';
+                break;
+              default:
+                break;
+            }
+            setLocationError(errorMessage);
+            console.error('Location error:', error);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } catch (err) {
+        setLocationError('Failed to request location permission');
+        console.error('Permission request error:', err);
+      }
+    };
+
+    requestLocation();
+  }, [isAuthenticated]);
+
+  // Track user location in real-time during navigation
+  useEffect(() => {
+    if (!mapInstance) return;
 
     const startTracking = () => {
       if ('geolocation' in navigator) {
@@ -118,8 +185,8 @@ function App() {
             const newLocation = [position.coords.latitude, position.coords.longitude];
             setUserLocation(newLocation);
             
-            // Update map view
-            if (mapInstance) {
+            // Update map view when route is active
+            if (routeActive && mapInstance) {
               mapInstance.setView(newLocation, mapInstance.getZoom());
               
               // Check proximity to next turn
@@ -129,7 +196,24 @@ function App() {
               }
             }
           },
-          (error) => console.error('Location error:', error),
+          (error) => {
+            let errorMessage = 'Location update failed';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location unavailable.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location timeout.';
+                break;
+              default:
+                break;
+            }
+            setLocationError(errorMessage);
+            console.error('Location watch error:', error);
+          },
           { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
         );
       }
@@ -233,15 +317,23 @@ function App() {
     }
   };
 
-  // Calculate route using NavigationService
+  // Calculate route using NavigationService based on user's actual position
   const calculateRoute = async () => {
     if (!mapInstance) return;
+
+    // Use real-time user location for route calculation
+    if (!userLocation) {
+      setLocationError('Waiting for location... Please ensure location access is enabled.');
+      speak('Waiting for your location. Please enable location access.');
+      return;
+    }
 
     const dest = destination || [37.8049, -122.3694]; // Default destination
     
     try {
       await NavigationService.calculateRoute(userLocation, dest);
       setRouteActive(true);
+      setLocationError(null);
       
       // Get first instruction
       const firstInstruction = NavigationService.getCurrentInstruction();
@@ -249,12 +341,13 @@ function App() {
         setNextInstruction(firstInstruction);
         if (syncEnabled && isPlaying) {
           setTimeout(() => {
-            speak(`Starting route. ${firstInstruction.text}`);
+            speak(`Starting route from your current location. ${firstInstruction.text}`);
           }, 500);
         }
       }
     } catch (error) {
       console.error('Route calculation failed:', error);
+      setLocationError('Unable to calculate route. Please check your connection.');
       speak('Unable to calculate route. Please check your connection.');
     }
   };
@@ -433,6 +526,20 @@ function App() {
               {routeActive ? 'Change Route' : 'Set Destination'}
             </button>
           </div>
+
+          {/* Location Status */}
+          {locationError && (
+            <div className="location-error">
+              ⚠️ {locationError}
+            </div>
+          )}
+          
+          {userLocation && (
+            <div className="location-status">
+              📍 Location: {userLocation[0].toFixed(4)}, {userLocation[1].toFixed(4)}
+              {routeActive && ' • Tracking active'}
+            </div>
+          )}
 
           {/* Navigation Instruction */}
           {nextInstruction && (
