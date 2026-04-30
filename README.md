@@ -186,13 +186,13 @@ Edit CSS variables in `src/index.css`:
 
 Deploy BeatMaps to your favorite platform with a single click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/beatmaps&env=SPOTIFY_CLIENT_ID&envDescription=Spotify%20Client%20ID%20from%20developer%20dashboard&envLink=https://developer.spotify.com/dashboard)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/pro-mwas1234/beatmaps&env=SPOTIFY_CLIENT_ID&envDescription=Spotify%20Client%20ID%20from%20developer%20dashboard&envLink=https://developer.spotify.com/dashboard)
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new?repository=https://github.com/YOUR_USERNAME/beatmaps&envs=SPOTIFY_CLIENT_ID&SPOTIFY_CLIENT_IDDesc=Spotify%20Client%20ID%20from%20developer%20dashboard)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new?repository=https://github.com/pro-mwas1234/beatmaps&envs=SPOTIFY_CLIENT_ID&SPOTIFY_CLIENT_IDDesc=Spotify%20Client%20ID%20from%20developer%20dashboard)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/beatmaps)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pro-mwas1234/beatmaps)
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/YOUR_USERNAME/beatmaps&branch=main&name=beatmaps)
+[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/pro-mwas1234/beatmaps&branch=main&name=beatmaps)
 
 ### Platform-Specific Instructions
 
