@@ -9,6 +9,13 @@ export interface TurnInstruction {
   location: [number, number];
 }
 
+declare module 'leaflet' {
+  namespace Routing {
+    function osrmv1(options?: any): any;
+    function control(options?: any): any;
+  }
+}
+
 class NavigationService {
   private map: L.Map | null = null;
   private routingControl: any = null;
@@ -25,7 +32,7 @@ class NavigationService {
     if (!this.map) return;
 
     // Dynamic import for leaflet-routing-machine
-    const { route } = await import('leaflet-routing-machine');
+    await import('leaflet-routing-machine');
 
     return new Promise((resolve, reject) => {
       // Remove existing route if any
@@ -33,7 +40,7 @@ class NavigationService {
         this.map!.removeControl(this.routingControl);
       }
 
-      this.routingControl = route({
+      this.routingControl = L.Routing.control({
         waypoints: [
           L.latLng(start[0], start[1]),
           L.latLng(end[0], end[1])
