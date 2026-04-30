@@ -14,6 +14,13 @@ const VOICE_SETTINGS = {
   pitch: 1.0
 };
 
+// Audio ducking settings - lowers music volume during voice instructions
+const DUCKING_SETTINGS = {
+  enabled: true,
+  targetVolume: 0.3, // Reduce music to 30% during instructions
+  transitionDuration: 0.3 // Smooth transition over 300ms
+};
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [spotifyToken, setSpotifyToken] = useState(null);
@@ -38,8 +45,8 @@ function App() {
   const locationWatchId = useRef(null);
   const initialLocationSet = useRef(false);
 
-  // Initialize voice navigation
-  const { speak, stopSpeaking, speaking, currentAnnouncement } = useVoiceNavigation(VOICE_SETTINGS);
+  // Initialize voice navigation with audio ducking
+  const { speak, stopSpeaking, speaking, currentAnnouncement, initAudioDucking } = useVoiceNavigation(VOICE_SETTINGS, DUCKING_SETTINGS);
 
   // Handle Spotify Authentication
   useEffect(() => {
@@ -185,9 +192,13 @@ function App() {
             const newLocation = [position.coords.latitude, position.coords.longitude];
             setUserLocation(newLocation);
             
+            // Update user location marker on the map
+            NavigationService.updateUserLocation(newLocation);
+            
             // Update map view when route is active
             if (routeActive && mapInstance) {
-              mapInstance.setView(newLocation, mapInstance.getZoom());
+              // Smoothly pan to user location
+              mapInstance.panTo(newLocation, { animate: true, duration: 0.5 });
               
               // Check proximity to next turn
               const upcomingTurn = NavigationService.checkProximity(newLocation);
@@ -214,7 +225,12 @@ function App() {
             setLocationError(errorMessage);
             console.error('Location watch error:', error);
           },
-          { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+          { 
+            enableHighAccuracy: true, 
+            maximumAge: 1000, 
+            timeout: 5000,
+            // Request best possible accuracy for navigation
+          }
         );
       }
     };
@@ -228,7 +244,7 @@ function App() {
     };
   }, [mapInstance, routeActive, syncEnabled, isPlaying, speak]);
 
-  // Initialize Spotify Player
+  // Initialize Spotify Player with audio ducking support
   useEffect(() => {
     if (!spotifyToken) return;
 
@@ -244,6 +260,16 @@ function App() {
           console.log('Spotify Player Ready:', device_id);
           setDeviceId(device_id);
           fetchCurrentTrack(spotifyToken);
+          
+          // Initialize audio ducking for Spotify player
+          // The SDK creates an internal audio element we need to access
+          setTimeout(() => {
+            const spotifyAudio = document.querySelector('audio[src*="spotify"]') || 
+                                 document.querySelector('audio');
+            if (spotifyAudio) {
+              initAudioDucking(spotifyAudio);
+            }
+          }, 1000);
         });
 
         spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -275,7 +301,7 @@ function App() {
     };
 
     initSpotify();
-  }, [spotifyToken]);
+  }, [spotifyToken, initAudioDucking]);
 
   // Fetch current playing track
   const fetchCurrentTrack = async (token) => {
