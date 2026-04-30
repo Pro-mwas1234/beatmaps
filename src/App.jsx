@@ -14,6 +14,14 @@ const VOICE_SETTINGS = {
   pitch: 1.0
 };
 
+// Transport modes
+const TRANSPORT_MODES = [
+  { id: 'driving', icon: '🚗', label: 'Drive' },
+  { id: 'walking', icon: '🚶', label: 'Walk' },
+  { id: 'cycling', icon: '🚴', label: 'Cycle' },
+  { id: 'transit', icon: '🚌', label: 'Transit' }
+];
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [spotifyToken, setSpotifyToken] = useState(null);
@@ -30,13 +38,134 @@ function App() {
   const [destination, setDestination] = useState(null);
   const [routeActive, setRouteActive] = useState(false);
   
+  // New state for Google Maps-like UI
+  const [originInput, setOriginInput] = useState('');
+  const [destinationInput, setDestinationInput] = useState('');
+  const [transportMode, setTransportMode] = useState('driving');
+  const [showSearchPanel, setShowSearchPanel] = useState(true);
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedOrigin, setSelectedOrigin] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchFocus, setSearchFocus] = useState(null);
+  
   const beatIntervalRef = useRef(null);
   const mapContainerRef = useRef(null);
   const L = useRef(null);
   const locationWatchId = useRef(null);
+  const searchMarkers = useRef([]);
 
   // Initialize voice navigation
   const { speak, stopSpeaking, speaking, currentAnnouncement } = useVoiceNavigation(VOICE_SETTINGS);
+
+  // Geocoding using OpenStreetMap Nominatim API
+  const searchLocation = async (query) => {
+    if (!query || query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await response.json();
+      setSearchResults(data.map(item => ({
+        name: item.display_name,
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon),
+        type: item.type
+      })));
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchFocus === 'origin' && originInput) {
+        searchLocation(originInput);
+      } else if (searchFocus === 'destination' && destinationInput) {
+        searchLocation(destinationInput);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [originInput, destinationInput, searchFocus]);
+
+  // Handle location selection
+  const handleSelectLocation = (location) => {
+    if (searchFocus === 'origin') {
+      setOriginInput(location.name.split(',')[0]);
+      setSelectedOrigin(location);
+      setUserLocation([location.lat, location.lon]);
+      
+      // Center map on origin
+      if (mapInstance) {
+        mapInstance.setView([location.lat, location.lon], 13);
+        
+        // Clear existing markers
+        searchMarkers.current.forEach(marker => marker.remove());
+        searchMarkers.current = [];
+        
+        // Add origin marker
+        const originMarker = L.current.marker([location.lat, location.lon]).addTo(mapInstance);
+        originMarker.bindPopup('Starting Point').openPopup();
+        searchMarkers.current.push(originMarker);
+      }
+    } else if (searchFocus === 'destination') {
+      setDestinationInput(location.name.split(',')[0]);
+      setSelectedDestination(location);
+      setDestination([location.lat, location.lon]);
+      
+      // Add destination marker
+      if (mapInstance && L.current) {
+        const destMarker = L.current.marker([location.lat, location.lon]).addTo(mapInstance);
+        destMarker.bindPopup('Destination').openPopup();
+        searchMarkers.current.push(destMarker);
+      }
+    }
+    
+    setSearchResults([]);
+    setSearchFocus(null);
+  };
+
+  // Use current location
+  const useCurrentLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = [position.coords.latitude, position.coords.longitude];
+          setUserLocation(coords);
+          setSelectedOrigin({ lat: coords[0], lon: coords[1], name: 'Current Location' });
+          setOriginInput('Current Location');
+          
+          if (mapInstance) {
+            mapInstance.setView(coords, 13);
+            
+            // Clear existing markers
+            searchMarkers.current.forEach(marker => marker.remove());
+            searchMarkers.current = [];
+            
+            const userMarker = L.current.marker(coords).addTo(mapInstance);
+            userMarker.bindPopup('Your Location').openPopup();
+            searchMarkers.current.push(userMarker);
+          }
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          speak('Unable to get your current location.');
+        }
+      );
+    }
+  };
 
   // Handle Spotify Authentication
   useEffect(() => {
@@ -235,13 +364,18 @@ function App() {
 
   // Calculate route using NavigationService
   const calculateRoute = async () => {
-    if (!mapInstance) return;
+    if (!mapInstance || !selectedOrigin || !selectedDestination) {
+      speak('Please select both starting point and destination.');
+      return;
+    }
 
-    const dest = destination || [37.8049, -122.3694]; // Default destination
+    const start = [selectedOrigin.lat, selectedOrigin.lon];
+    const dest = [selectedDestination.lat, selectedDestination.lon];
     
     try {
-      await NavigationService.calculateRoute(userLocation, dest);
+      await NavigationService.calculateRoute(start, dest);
       setRouteActive(true);
+      setShowSearchPanel(false);
       
       // Get first instruction
       const firstInstruction = NavigationService.getCurrentInstruction();
@@ -257,6 +391,26 @@ function App() {
       console.error('Route calculation failed:', error);
       speak('Unable to calculate route. Please check your connection.');
     }
+  };
+
+  // Start navigation with selected transport mode
+  const handleStartNavigation = () => {
+    if (!selectedOrigin || !selectedDestination) {
+      speak('Please enter origin and destination');
+      return;
+    }
+    calculateRoute();
+  };
+
+  // Clear route and show search panel
+  const handleBackToSearch = () => {
+    setRouteActive(false);
+    setShowSearchPanel(true);
+    setNextInstruction(null);
+    if (NavigationService.routingControl) {
+      mapInstance.removeControl(NavigationService.routingControl);
+    }
+    NavigationService.reset();
   };
 
   // Beat Sync Logic
@@ -326,24 +480,6 @@ function App() {
     }
   };
 
-  // Set destination handler
-  const handleSetDestination = () => {
-    const lat = prompt('Enter destination latitude:', '37.8049');
-    const lng = prompt('Enter destination longitude:', '-122.3694');
-    
-    if (lat && lng) {
-      const newDest = [parseFloat(lat), parseFloat(lng)];
-      setDestination(newDest);
-      
-      // Add marker for destination
-      if (mapInstance && L.current) {
-        L.current.marker(newDest).addTo(mapInstance).bindPopup('Destination');
-      }
-      
-      calculateRoute();
-    }
-  };
-
   // Generate visualizer bars
   const renderVisualizer = () => (
     <div className="beat-visualizer">
@@ -354,6 +490,101 @@ function App() {
           style={{ height: `${height}%` }}
         />
       ))}
+    </div>
+  );
+
+  // Render Google Maps-like search panel
+  const renderSearchPanel = () => (
+    <div className="search-panel">
+      <div className="search-header">
+        <h2>Navigate to the rhythm</h2>
+        <button className="close-btn" onClick={() => setShowSearchPanel(false)}>✕</button>
+      </div>
+      
+      {/* Origin Input */}
+      <div className="search-input-container">
+        <div className="input-icon origin-icon">📍</div>
+        <input
+          type="text"
+          placeholder="Choose starting point"
+          value={originInput}
+          onChange={(e) => setOriginInput(e.target.value)}
+          onFocus={() => setSearchFocus('origin')}
+          className="search-input"
+        />
+        {originInput && (
+          <button className="clear-btn" onClick={() => {
+            setOriginInput('');
+            setSelectedOrigin(null);
+          }}>✕</button>
+        )}
+      </div>
+      
+      {/* Destination Input */}
+      <div className="search-input-container">
+        <div className="input-icon dest-icon">🏁</div>
+        <input
+          type="text"
+          placeholder="Choose destination"
+          value={destinationInput}
+          onChange={(e) => setDestinationInput(e.target.value)}
+          onFocus={() => setSearchFocus('destination')}
+          className="search-input"
+        />
+        {destinationInput && (
+          <button className="clear-btn" onClick={() => {
+            setDestinationInput('');
+            setSelectedDestination(null);
+          }}>✕</button>
+        )}
+      </div>
+      
+      {/* Search Results Dropdown */}
+      {searchResults.length > 0 && (
+        <div className="search-results">
+          {searchResults.map((result, index) => (
+            <div
+              key={index}
+              className="search-result-item"
+              onClick={() => handleSelectLocation(result)}
+            >
+              <span className="result-icon">📍</span>
+              <span className="result-name">{result.name.split(',')[0]}</span>
+              <span className="result-type">{result.type}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <button className="quick-action-btn" onClick={useCurrentLocation}>
+          📍 Use Current Location
+        </button>
+      </div>
+      
+      {/* Transport Mode Selection */}
+      <div className="transport-modes">
+        {TRANSPORT_MODES.map(mode => (
+          <button
+            key={mode.id}
+            className={`transport-mode-btn ${transportMode === mode.id ? 'active' : ''}`}
+            onClick={() => setTransportMode(mode.id)}
+          >
+            <span className="mode-icon">{mode.icon}</span>
+            <span className="mode-label">{mode.label}</span>
+          </button>
+        ))}
+      </div>
+      
+      {/* Start Navigation Button */}
+      <button
+        className="start-nav-btn"
+        onClick={handleStartNavigation}
+        disabled={!selectedOrigin || !selectedDestination}
+      >
+        Start Navigation
+      </button>
     </div>
   );
 
@@ -378,7 +609,14 @@ function App() {
     <div id="app">
       <div className="map-container" ref={mapContainerRef} id="map"></div>
       
-      <div className="overlay-panel">
+      {/* Search Panel - Google Maps style */}
+      {showSearchPanel && (
+        <div className="search-panel-overlay">
+          {renderSearchPanel()}
+        </div>
+      )}
+      
+      <div className={`overlay-panel ${routeActive ? 'navigation-mode' : ''}`}>
         <div className="panel-content">
           {/* Header */}
           <div className="header">
@@ -426,12 +664,14 @@ function App() {
             >
               {syncEnabled ? 'Disable Sync' : 'Enable Beat Sync'}
             </button>
-            <button 
-              className="btn btn-secondary" 
-              onClick={handleSetDestination}
-            >
-              {routeActive ? 'Change Route' : 'Set Destination'}
-            </button>
+            {routeActive && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={handleBackToSearch}
+              >
+                Back to Search
+              </button>
+            )}
           </div>
 
           {/* Navigation Instruction */}

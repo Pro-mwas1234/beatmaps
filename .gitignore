@@ -1,1 +1,28 @@
-Nothing needs to be added to .gitignore since only a source configuration file (`vite.config.js`) was modified and no build artifacts, dependencies, or temporary files were detected in the changes.
+```
+# Build artifacts
+dist/
+build/
+*.js
+*.css
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+```
