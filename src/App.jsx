@@ -311,11 +311,19 @@ function App() {
     }
   };
 
-  // Login handler
-  const handleLogin = () => {
-    const scope = 'user-modify-playback-state user-read-playback-state streaming user-read-currently-playing';
-    const url = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(window.location.origin)}&scope=${encodeURIComponent(scope)}&show_dialog=false`;
-    window.location.href = url;
+  // Login handler - calls backend endpoint to get auth URL with response_type=code
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('/api/spotify/login');
+      const data = await response.json();
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        console.error('No auth URL received from server');
+      }
+    } catch (error) {
+      console.error('Error initiating Spotify login:', error);
+    }
   };
 
   // Set destination handler
