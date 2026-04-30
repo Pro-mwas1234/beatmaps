@@ -117,3 +117,48 @@
     width: 100%;
   }
 }
+
+/* Location status styles */
+.location-error {
+  background: rgba(255, 82, 82, 0.2);
+  border: 1px solid #ff5252;
+  color: #ff5252;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  animation: pulse-error 2s infinite;
+}
+
+@keyframes pulse-error {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.location-status {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.nav-instruction.speaking {
+  animation: speaking-pulse 1s ease-in-out infinite;
+}
+
+@keyframes speaking-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+  }
+}
