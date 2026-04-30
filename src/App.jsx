@@ -360,15 +360,27 @@ function App() {
   if (!isAuthenticated) {
     return (
       <div className="login-screen">
-        <h1 className="login-title">Beat<span>Maps</span></h1>
+        <h1 className="login-title">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style={{ marginBottom: '16px' }}>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <br />
+          Beat<span>Maps</span>
+        </h1>
         <p className="login-subtitle">
           Navigate to the rhythm. Turn-by-turn directions synchronized to your music's BPM.
         </p>
         <button className="login-btn" onClick={handleLogin}>
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
           Connect Spotify & Start
         </button>
         <p className="login-note">
-          Note: Requires Spotify Premium for playback
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+          </svg>
+          Requires Spotify Premium for playback
         </p>
       </div>
     );
@@ -380,6 +392,20 @@ function App() {
       
       <div className="overlay-panel">
         <div className="panel-content">
+          {/* Status Bar */}
+          <div className="status-bar">
+            <div className="status-item">
+              <span className={`status-dot ${routeActive ? '' : 'offline'}`}></span>
+              <span>{routeActive ? 'Navigation Active' : 'No Route'}</span>
+            </div>
+            <div className="status-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <span>{spotifyToken ? 'Connected' : 'Disconnected'}</span>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="header">
             <div className="logo">
@@ -397,7 +423,7 @@ function App() {
           {/* Player Info */}
           <div className="player-section">
             <img 
-              src={currentTrack?.albumArt || 'https://via.placeholder.com/70'} 
+              src={currentTrack?.albumArt || 'https://via.placeholder.com/72'} 
               alt="Album Art" 
               className="album-art"
             />
@@ -407,40 +433,105 @@ function App() {
             </div>
           </div>
 
+          {/* Quick Actions */}
+          <div className="quick-actions">
+            <button 
+              className="quick-action-btn"
+              onClick={() => {
+                if (mapInstance && userLocation) {
+                  mapInstance.setView(userLocation, 15);
+                  speak('Centered on your location');
+                }
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+              </svg>
+              Locate Me
+            </button>
+            <button 
+              className="quick-action-btn"
+              onClick={handleSetDestination}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+              Destination
+            </button>
+            <button 
+              className="quick-action-btn"
+              onClick={() => {
+                setRouteActive(false);
+                setNextInstruction(null);
+                stopSpeaking();
+                speak('Route cleared');
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              </svg>
+              Clear Route
+            </button>
+          </div>
+
           {/* Beat Visualizer */}
           {renderVisualizer()}
 
           {/* Controls */}
           <div className="controls">
             <button 
-              className="btn btn-primary" 
+              className={`btn btn-icon ${isPlaying ? 'btn-primary' : ''}`} 
               onClick={togglePlay}
               disabled={!deviceId}
+              title={isPlaying ? 'Pause' : 'Play'}
             >
-              {isPlaying ? 'Pause' : 'Play'}
+              {isPlaying ? (
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              )}
             </button>
             <button 
               className={`btn ${syncEnabled ? 'btn-primary' : ''}`} 
               onClick={toggleSync}
               disabled={!deviceId || !currentTrack}
             >
-              {syncEnabled ? 'Disable Sync' : 'Enable Beat Sync'}
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/>
+              </svg>
+              {syncEnabled ? 'Sync On' : 'Sync Off'}
             </button>
             <button 
               className="btn btn-secondary" 
               onClick={handleSetDestination}
             >
-              {routeActive ? 'Change Route' : 'Set Destination'}
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13c0-5 4-9 9-9s9 4 9 9z"/>
+                <circle cx="12" cy="10" r="3" fill="#1a1a1a"/>
+              </svg>
+              {routeActive ? 'Change Route' : 'Set Route'}
             </button>
           </div>
 
           {/* Navigation Instruction */}
           {nextInstruction && (
             <div className={`nav-instruction ${speaking ? 'speaking' : ''}`}>
-              <div className="instruction-icon">🗺️</div>
+              <div className="instruction-icon">
+                {nextInstruction.text.toLowerCase().includes('left') ? '⬅️' : 
+                 nextInstruction.text.toLowerCase().includes('right') ? '➡️' : 
+                 nextInstruction.text.toLowerCase().includes('straight') ? '⬆️' : 
+                 nextInstruction.text.toLowerCase().includes('uturn') ? '🔄' : '🗺️'}
+              </div>
               <div className="instruction-text">{nextInstruction.text}</div>
               <div className="instruction-distance">
-                {Math.round(nextInstruction.distance)}m • {speaking ? '🔊 Announcing...' : 'Next turn'}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                {Math.round(nextInstruction.distance)}m • {speaking ? '🔊 Announcing...' : 'Next'}
               </div>
             </div>
           )}

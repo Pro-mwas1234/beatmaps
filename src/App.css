@@ -76,10 +76,11 @@
   right: 20px;
   background: var(--surface);
   padding: 15px 25px;
-  border-radius: 10px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   z-index: 2000;
   animation: slideIn 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 @keyframes slideIn {
@@ -93,16 +94,40 @@
   }
 }
 
+/* Tooltip styles */
+[title] {
+  position: relative;
+}
+
+/* Focus states for accessibility */
+.btn:focus-visible,
+.quick-action-btn:focus-visible,
+.login-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: var(--primary);
+  color: #000;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .panel-content {
-    padding: 15px;
+    padding: 16px;
   }
   
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
   
   .bpm-display {
@@ -110,10 +135,114 @@
   }
   
   .controls {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
   }
   
   .btn {
-    width: 100%;
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: auto;
+    padding: 12px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .btn-icon {
+    flex: 0 0 auto;
+  }
+  
+  .quick-actions {
+    gap: 6px;
+  }
+  
+  .quick-action-btn {
+    padding: 8px;
+    font-size: 0.7rem;
+  }
+  
+  .quick-action-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .login-title {
+    font-size: 2.5rem;
+  }
+  
+  .status-bar {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 481px) and (max-width: 768px) {
+  .panel-content {
+    max-width: 400px;
+  }
+  
+  .btn {
+    padding: 13px 16px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .overlay-panel {
+    padding: 8px;
+  }
+  
+  .panel-content {
+    padding: 12px 16px;
+  }
+  
+  .player-section {
+    margin-bottom: 12px;
+    padding: 10px;
+  }
+  
+  .album-art {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .beat-visualizer {
+    height: 36px;
+    margin-bottom: 12px;
+  }
+  
+  .nav-instruction {
+    padding: 10px;
+    margin-top: 10px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .overlay-panel,
+  .login-screen {
+    display: none;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn {
+    border-width: 2px;
+  }
+  
+  .sync-badge.active {
+    border-width: 2px;
   }
 }

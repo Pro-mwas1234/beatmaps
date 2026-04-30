@@ -1,12 +1,4 @@
-```
-# Environment variables
-.env
-.env.local
-.env.*
-
-# Logs
-*.log
-
+```gitignore
 # Dependencies
 node_modules/
 
@@ -20,36 +12,52 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py~
 *.py.class
-*.so
-*.egg-info/
-.eggs/
+*.py.obj
+*.py.out
+*.py.dll
+*.py.so
+*.py.a
+*.py.o
+*.py.obj
+*.py.out
 
 # Virtual environments
 venv/
 .venv/
 env/
-ENV/
+.ENV/
 
-# IDE specific
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS generated
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# Environment variables
+.env
+.env.local
+*.env.*
 
 # Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# Temporary files
-*.tmp
-*.temp
-*.bak
+# MyPy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
 
 # Compressed files
 *.zip
@@ -74,12 +82,4 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
-# Cache directories
-.cache/
-.mypy_cache/
-.pytest_cache/
-.gradle/
-.npm/
-.yarn/
 ```
