@@ -4,10 +4,6 @@
     {
       "src": "server/index.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -16,16 +12,16 @@
       "dest": "server/index.js"
     },
     {
-      "src": "/beat\\.svg",
-      "dest": "dist/beat.svg"
+      "src": "/assets/(.*)",
+      "dest": "/dist/assets/$1"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "dist/assets/$1"
+      "src": "/beat\\.svg",
+      "dest": "/dist/beat.svg"
     },
     {
       "src": "/(.*)",
-      "dest": "dist/index.html"
+      "dest": "server/index.js"
     }
   ]
 }

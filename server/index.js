@@ -16,6 +16,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the dist directory
+app.use('/assets', express.static(path.join(__dirname, '../dist/assets')));
+app.use('/beat.svg', express.static(path.join(__dirname, '../dist'), { index: 'beat.svg' }));
+app.use(express.static(path.join(__dirname, '../dist')));
+
 // In-memory store for auth codes (in production, use a database)
 const authCodes = new Map();
 
