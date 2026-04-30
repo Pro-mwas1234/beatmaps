@@ -265,6 +265,7 @@
   left: auto;
   width: 350px;
   max-width: calc(100% - 40px);
+  z-index: 1000 !important;
 }
 
 .overlay-panel.navigation-mode .panel-content {

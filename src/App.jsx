@@ -140,6 +140,7 @@ function App() {
   // Use current location
   const useCurrentLocation = () => {
     if ('geolocation' in navigator) {
+      speak('Getting your current location...');
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const coords = [position.coords.latitude, position.coords.longitude];
@@ -158,12 +159,27 @@ function App() {
             userMarker.bindPopup('Your Location').openPopup();
             searchMarkers.current.push(userMarker);
           }
+          speak('Current location found. You can now enter your destination.');
         },
         (error) => {
           console.error('Geolocation error:', error);
-          speak('Unable to get your current location.');
-        }
+          let errorMsg = 'Unable to get your current location.';
+          if (error.code === 1) {
+            errorMsg = 'Location permission denied. Please allow location access in your browser settings.';
+          } else if (error.code === 2) {
+            errorMsg = 'Location unavailable. Please check your device\'s GPS settings.';
+          } else if (error.code === 3) {
+            errorMsg = 'Location request timed out. Please try again.';
+          }
+          speak(errorMsg);
+          alert(errorMsg);
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
       );
+    } else {
+      const msg = 'Geolocation is not supported by your browser.';
+      speak(msg);
+      alert(msg);
     }
   };
 
